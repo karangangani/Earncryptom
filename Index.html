@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup / Login - EarnCrypto</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0px 0px 15px rgba(255, 165, 0, 0.5);
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      background: orange;
+      color: black;
+      padding: 10px;
+      border: none;
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: darkorange;
+    }
+    a {
+      color: orange;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Signup / Login to EarnCrypto</h2>
+    <p>Watch Ads & Earn Free Crypto!</p>
+    <input type="email" id="email" placeholder="Enter your email" required />
+    <!-- Optionally, let users enter a referral code -->
+    <input type="text" id="referral" placeholder="Enter referral code (optional)" />
+    <button id="send-otp-btn">Send OTP</button>
+    <p id="message"></p>
+  </div>
+
+  <!-- Load Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Load the custom script -->
+  <script src="index.js"></script>
+</body>
+</html>
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://t.me/earncryptofree24" target="_blank" style="text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px;">
+    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram" style="width: 28px;">
+    <span style="font-size: 16px;">Join Our Official Channel</span>
+  </a>
+</div>
