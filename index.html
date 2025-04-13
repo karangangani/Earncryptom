@@ -1,72 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Signup / Login - EarnCrypto</title>
+  <meta charset="UTF-8">
+  <title>EarnCrypto Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      background-color: #121212;
-      color: #fff;
+      background-color: #111;
+      color: #facc15;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       height: 100vh;
-      font-family: Arial, sans-serif;
+      margin: 0;
     }
+
     .container {
-      background: #222;
-      padding: 20px;
+      background: #1c1c1c;
+      padding: 2rem;
       border-radius: 10px;
+      box-shadow: 0 0 10px #facc15;
       text-align: center;
-      width: 300px;
-      box-shadow: 0px 0px 15px rgba(255, 165, 0, 0.5);
-    }
-    input {
       width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
+      max-width: 400px;
     }
-    button {
-      background: orange;
-      color: black;
-      padding: 10px;
-      border: none;
+
+    input {
       width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      border: none;
       border-radius: 5px;
+    }
+
+    button {
+      background-color: #facc15;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      font-weight: bold;
       cursor: pointer;
+      border-radius: 5px;
+      transition: 0.3s;
     }
+
     button:hover {
-      background: darkorange;
+      background-color: #eab308;
     }
-    a {
-      color: orange;
-      text-decoration: none;
+
+    .telegram {
+      margin-top: 20px;
+    }
+
+    .telegram img {
+      width: 30px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .message {
+      margin-top: 1rem;
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Signup / Login to EarnCrypto</h2>
-    <p>Watch Ads & Earn Free Crypto!</p>
-    <input type="email" id="email" placeholder="Enter your email" required />
-    <!-- Optionally, let users enter a referral code -->
-    <input type="text" id="referral" placeholder="Enter referral code (optional)" />
-    <button id="send-otp-btn">Send OTP</button>
-    <p id="message"></p>
+    <h2>EarnCrypto Login</h2>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Enter your email" required />
+      <button type="submit">Send Login Link</button>
+      <div class="message" id="msg"></div>
+    </form>
+    <div class="telegram">
+      <a href="https://t.me/earncryptofree24" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram" />
+        Join our Telegram
+      </a>
+    </div>
   </div>
 
-  <!-- Load Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <!-- Load the custom script -->
-  <script src="index.js"></script>
+  <script>
+    const supabase = supabase.createClient(
+      "https://aoewgfpojwisjwnspvij.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvZXdnZnBvandpc2p3bnNwdmlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE2ODU3NDQsImV4cCI6MjA1NzI2MTc0NH0.Pii4cQPm4Tb4qOlYQROO6lLVm25-VuWQoDASnxkffzw"
+    );
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const msg = document.getElementById("msg");
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: "https://karangangani.github.io/Earncryptom/dashboard.html"
+        }
+      });
+
+      if (error) {
+        msg.textContent = "Error: " + error.message;
+        msg.style.color = "red";
+      } else {
+        msg.textContent = "Magic link sent! Check your email.";
+        msg.style.color = "lightgreen";
+      }
+    });
+  </script>
 </body>
 </html>
-<div style="text-align: center; margin-bottom: 20px;">
-  <a href="https://t.me/earncryptofree24" target="_blank" style="text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px;">
-    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111646.png" alt="Telegram" style="width: 28px;">
-    <span style="font-size: 16px;">Join Our Official Channel</span>
-  </a>
-</div>
