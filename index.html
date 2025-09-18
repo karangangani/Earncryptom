@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earn With Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='9892483' data-sdk='show_9892483'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0a0a1a; color: #fff; padding: 16px; max-width: 100%; overflow-x: hidden; background-image: radial-gradient(circle at 10% 20%, rgba(0, 136, 204, 0.1) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 136, 204, 0.1) 0%, transparent 20%); }
+        .container { max-width: 500px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #0088cc, #005599); border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px; background-color: rgba(0, 0, 0, 0.3); border-radius: 10px; }
+        .nav { display: flex; justify-content: space-around; margin: 20px 0; padding: 12px; background-color: #111; border-radius: 15px; }
+        .nav-btn { padding: 12px 20px; background-color: #0088cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .nav-btn.active { background-color: #006699; box-shadow: 0 0 15px rgba(0, 136, 204, 0.5); }
+        .section { display: none; padding: 20px; background-color: #111; border-radius: 15px; margin-bottom: 20px; min-height: 300px; }
+        .section.active { display: block; }
+        .stats { display: flex; justify-content: space-between; margin: 20px 0; }
+        .stat-box { background-color: #1a1a2a; padding: 15px; border-radius: 10px; text-align: center; flex: 1; margin: 0 5px; border: 1px solid #0088cc; }
+        .stat-value { font-size: 24px; color: #0088cc; font-weight: bold; }
+        .stat-label { font-size: 14px; color: #aaa; }
+        .referral-section { text-align: center; margin: 25px 0; padding: 15px; background-color: #1a1a2a; border-radius: 10px; }
+        .referral-code { padding: 15px; background-color: #2a2a4a; border-radius: 10px; margin: 15px 0; font-size: 18px; letter-spacing: 2px; color: #0088cc; font-weight: bold; border: 1px dashed #0088cc; }
+        .info-text { text-align: center; margin: 15px 0; color: #aaa; font-size: 14px; }
+        .ad-container { background: linear-gradient(135deg, #1a1a2a, #2a2a4a); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #0088cc; cursor: pointer; transition: all 0.3s; }
+        .ad-container:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3); }
+        .ad-title { font-size: 20px; margin-bottom: 10px; color: #0088cc; }
+        .ad-description { color: #aaa; margin-bottom: 15px; }
+        .btn { padding: 12px 25px; background-color: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn:hover { background-color: #006699; }
+        .btn:disabled { background-color: #555; cursor: not-allowed; }
+        .loader { border: 5px solid #333; border-top: 5px solid #0088cc; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        .withdraw-form { margin-top: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #333; background-color: #222; color: white; }
+        .ad-status { text-align: center; margin: 15px 0; padding: 10px; background-color: #1a1a2a; border-radius: 10px; }
+        .countdown { font-size: 18px; color: #0088cc; font-weight: bold; margin: 10px 0; }
+        .channel-btn { padding: 12px 25px; background-color: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Earn With Telegram</h1>
+            <p>Watch Ads & Earn Rewards</p>
+            <div class="user-info">
+                <div>
+                    <div id="user-name">Loading...</div>
+                    <div id="user-id">ID: Loading...</div>
+                </div>
+                <div id="user-coins">0 🪙</div>
+            </div>
+        </div>
+        
+        <div class="nav">
+            <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-btn" onclick="showSection('ads')">Ads</button>
+            <button class="nav-btn" onclick="showSection('withdraw')">Withdraw</button>
+        </div>
+        
+        <div id="dashboard" class="section active">
+            <h2>Your Dashboard</h2>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="total-coins">0 🪙</div>
+                    <div class="stat-label">Total Coins</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="ads-watched">0</div>
+                    <div class="stat-label">Ads Watched</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="ref-count">0</div>
+                    <div class="stat-label">Referrals</div>
+                </div>
+            </div>
+            <div class="referral-section">
+                <h3>Your Referral Code</h3>
+                <div class="referral-code" id="ref-code">Loading...</div>
+                <button class="btn" id="copyReferral">Copy Referral</button>
+                <p id="ref-status"></p>
+                <p>Copy this code with friends to earn 100 coins after 1 hour! <br> Every time you copy referral, use only this, otherwise you won't get coins.</p>
+            </div>
+            <div class="info-text">
+                <p>🎯 Daily Limit: 100 ads per day</p>
+                <p>💰 Each ad gives you 20 🪙</p>
+            </div>
+            <button class="channel-btn" onclick="joinChannel()">Join Official Channel</button>
+        </div>
+        
+        <div id="ads" class="section">
+            <h2>Watch Ads & Earn Coins</h2>
+            <p class="info-text">Click on an ad to watch and earn 20 🪙. After 20 ads, refer 2 friends to unlock all ads.</p>
+            <div class="ad-container" onclick="watchAd('interstitial')">
+                <div class="ad-title">Rewarded Interstitial Ad</div>
+                <div class="ad-description">Watch a full-screen ad and earn 20 🪙</div>
+                <button class="btn">Watch Ad</button>
+            </div>
+            <div class="ad-container" onclick="watchAd('popup')">
+                <div class="ad-title">Rewarded Popup Ad</div>
+                <div class="ad-description">Watch a popup ad and earn 20 🪙</div>
+                <button class="btn">Watch Ad</button>
+            </div>
+            <div class="ad-container" onclick="watchAd('inApp')">
+                <div class="ad-title">In-App Interstitial Ad</div>
+                <div class="ad-description">Watch an in-app ad and earn 20 🪙</div>
+                <button class="btn">Watch Ad</button>
+            </div>
+            <div class="loader" id="ad-loader"></div>
+            <div class="ad-status">
+                <p id="ads-today">Ads watched today: 0/100</p>
+                <p id="next-ad">Next ad available: Now</p>
+                <div class="countdown" id="countdown" style="display: none;">15s</div>
+                <p id="ad-lock-status"></p>
+            </div>
+        </div>
+        <div id="withdraw" class="section">
+            <h2>Withdraw Your Earnings</h2>
+            <p class="info-text">Minimum withdrawal: 50,000 🪙 = 25 USDT | Must have 20 referrals</p>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="withdraw-coins">0 🪙</div>
+                    <div class="stat-label">Your Coins</div>
+                </div>
+            </div>
+            <div class="withdraw-form">
+                <div class="form-group">
+                    <label for="wallet-address">Binance ERC20 Wallet Address</label>
+                    <input type="text" id="wallet-address" placeholder="Enter your wallet address">
+                </div>
+                <div class="form-group">
+                    <label for="withdraw-amount">Amount to Withdraw (Coins)</label>
+                    <input type="number" id="withdraw-amount" placeholder="Min 50,000 🪙">
+                </div>
+                <div class="form-group">
+                    <label for="referrals">Number of Referrals</label>
+                    <input type="number" id="referrals" placeholder="Min 20 referrals">
+                </div>
+                <button class="btn" onclick="requestWithdrawal()">Request Withdrawal</button>
+                <button class="btn" onclick="makeBinanceAccount()" style="margin-top: 10px;">Make account on Binance</button>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Earn With Telegram Mini App © 2023</p>
+        </div>
+    </div>
+
+    <script>
+        // === Supabase Initialization ===
+        const SUPABASE_URL = 'https://lkrkyalivrrmkoyfrhit.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxrcmt5YWxpdnJybWtveWZyaGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNDY1MDUsImV4cCI6MjA3MzcyMjUwNX0.g_lW4S9-C8uGxC5JrXfK_NWQEPnwwmMhT7vLdfS0K4Y';
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        let userData = {
+            coins: 0,
+            adsWatched: 0,
+            adsToday: 0,
+            lastAdTime: 0,
+            lastAdResetTime: 0,
+            referrals: 0,
+            referralCode: "",
+            userId: tg.initDataUnsafe.user?.id || Math.floor(Math.random() * 1000000),
+            userName: tg.initDataUnsafe.user?.first_name || "Telegram User",
+            walletAddress: "",
+            withdrawals: [],
+            referralRewardsPending: {},
+            lastCopyTime: 0
+        };
+
+        // === Supabase: Initialize App ===
+        async function initApp() {
+            try {
+                // Fetch or create user in Supabase
+                let { data: existingUser, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', userData.userId)
+                    .single();
+
+                if (error || !existingUser) {
+                    userData.referralCode = generateReferralCode();
+                    const newUser = { 
+                        id: userData.userId, 
+                        name: userData.userName, 
+                        coins: 0, 
+                        ads_watched: 0, 
+                        ads_today: 0, 
+                        last_ad_time: 0, 
+                        last_ad_reset_time: 0, 
+                        referrals: 0, 
+                        referral_code: userData.referralCode, 
+                        created_at: new Date().toISOString() 
+                    };
+                    const { data: insertedUser, error: insertError } = await supabase
+                        .from('users')
+                        .insert([newUser])
+                        .select()
+                        .single();
+                    if (insertError) throw insertError;
+                    userData = { ...userData, ...insertedUser };
+                } else {
+                    userData = { ...userData, ...existingUser };
+                }
+
+                await checkAdReset();
+                updateUI();
+                updateAdAvailability();
+                await checkReferralRewards();
+                await checkReferralCopyRewards();
+                await checkForReferral();
+            } catch (error) {
+                console.error('Init error:', error);
+                alert('Failed to initialize app. Please try again.');
+            }
+        }
+
+        function generateReferralCode() {
+            return 'REF' + userData.userId.toString().slice(-6) + Math.floor(Math.random() * 100).toString().padStart(2, '0');
+        }
+
+        // === Supabase: Check for Referrals ===
+        async function checkForReferral() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const refCode = urlParams.get('ref');
+                if (refCode && refCode !== userData.referralCode) {
+                    const { data: referrer } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('referral_code', refCode)
+                        .single();
+                    if (referrer) {
+                        // Check if referral already exists
+                        const { data: existingReferral } = await supabase
+                            .from('referrals')
+                            .select('*')
+                            .eq('referrer_id', referrer.id)
+                            .eq('referred_id', userData.userId);
+                        if (!existingReferral || existingReferral.length === 0) {
+                            await supabase.from('referrals').insert([
+                                { referrer_id: referrer.id, referred_id: userData.userId, timestamp: Date.now(), rewarded: false }
+                            ]);
+                            await supabase.rpc('increment_referrals', { user_id: referrer.id });
+                            alert('Referral recorded! Referrer will earn 100 🪙 after 1 hour.');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Referral check error:', error);
+            }
+        }
+      // === Supabase: Check Referral Rewards ===
+        async function checkReferralRewards() {
+            try {
+                const { data: referrals } = await supabase
+                    .from('referrals')
+                    .select('*')
+                    .eq('referrer_id', userData.userId)
+                    .eq('rewarded', false);
+                
+                for (let ref of referrals) {
+                    if (Date.now() - ref.timestamp >= 3600000) { // 1 hour
+                        userData.coins += 100;
+                        await supabase.from('referrals').update({ rewarded: true }).eq('id', ref.id);
+                        await saveUserData();
+                        updateUI();
+                        alert('You earned 100 🪙 from a referral!');
+                    }
+                }
+            } catch (error) {
+                console.error('Referral rewards error:', error);
+            }
+        }
+
+        // === Supabase: Check Referral Copy Rewards ===
+        async function checkReferralCopyRewards() {
+            try {
+                const { data: referrals } = await supabase
+                    .from('referrals')
+                    .select('*')
+                    .eq('referrer_id', userData.userId)
+                    .eq('rewarded', false);
+                
+                for (let ref of referrals) {
+                    if (Date.now() - ref.timestamp >= 3600000) { // 1 hour
+                        userData.coins += 100;
+                        userData.referrals += 2; // Add 2 referrals for copy
+                        await supabase.from('referrals').update({ rewarded: true }).eq('id', ref.id);
+                        await saveUserData();
+                        updateUI();
+                        alert('You earned 100 🪙 and 2 referrals for copying your referral!');
+                    }
+                }
+            } catch (error) {
+                console.error('Referral copy rewards error:', error);
+            }
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function watchAd(type) {
+            try {
+                if (userData.adsToday >= 100) {
+                    const timeLeft = Math.max(0, 43200000 - (Date.now() - userData.lastAdResetTime)); // 12h
+                    if (timeLeft > 0) {
+                        const hoursLeft = Math.ceil(timeLeft / 3600000);
+                        alert(`You have reached the daily limit of 100 ads. Please wait ${hoursLeft} hours to watch again.`);
+                        return;
+                    } else {
+                        userData.adsToday = 0;
+                        userData.lastAdResetTime = Date.now();
+                        await saveUserData();
+                    }
+                }
+                if (userData.adsWatched >= 20 && userData.referrals < 2) {
+                    document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
+                    alert('You need to refer 2 friends to unlock more ads after 20 ads.');
+                    return;
+                }
+
+                const now = Date.now();
+                if (now - userData.lastAdTime < 15000) {
+                    const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
+                    document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
+                    alert(`Please wait ${timeLeft} seconds before watching another ad.`);
+                    return;
+                }
+
+                const loader = document.getElementById('ad-loader');
+                loader.style.display = 'block';
+                document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+
+                let adCall;
+                if (type === 'interstitial') {
+                    adCall = show_9892483().then(() => {
+                        rewardUser();
+                        alert('You have seen an ad!');
+                    }).catch(() => {
+                        alert('Ad failed to load. Please try again later.');
+                    });
+                } else if (type === 'popup') {
+                    adCall = show_9892483('pop').then(() => {
+                        rewardUser();
+                    }).catch(() => {
+                        alert('Ad failed to load. Please try again later.');
+                    });
+                } else if (type === 'inApp') {
+                    adCall = show_9892483({
+                        type: 'inApp',
+                        inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false }
+                    }).catch(() => {
+                        alert('Ad failed to load. Please try again later.');
+                    });
+                }
+                adCall.finally(() => {
+                    loader.style.display = 'none';
+                    document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+                });
+            } catch (error) {
+                console.error('Watch ad error:', error);
+                alert('Error watching ad. Please try again.');
+            }
+        }
+
+        // === Supabase: Reward User ===
+        async function rewardUser() {
+            try {
+                userData.coins += 20;
+                userData.adsWatched += 1;
+                userData.adsToday += 1;
+                userData.lastAdTime = Date.now();
+                if (userData.adsToday >= 100) {
+                    userData.lastAdResetTime = Date.now();
+                }
+                await saveUserData();
+                updateUI();
+                startCountdown();
+                alert('You earned 20 🪙!');
+            } catch (error) {
+                console.error('Reward user error:', error);
+            }
+        }
+
+        function startCountdown() {
+            const countdownElement = document.getElementById('countdown');
+            const nextAdElement = document.getElementById('next-ad');
+            countdownElement.style.display = 'block';
+            nextAdElement.style.display = 'none';
+            let timeLeft = 15;
+            const timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    countdownElement.style.display = 'none';
+                    nextAdElement.style.display = 'block';
+                    updateAdAvailability();
+                } else {
+                    countdownElement.textContent = `${timeLeft}s`;
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        // === Supabase: Update Ad Availability ===
+        async function updateAdAvailability() {
+            try {
+                const now = Date.now();
+                if (userData.adsToday >= 100) {
+                    const timeLeft = Math.max(0, 43200000 - (now - userData.lastAdResetTime));
+                    if (timeLeft > 0) {
+                        const hoursLeft = Math.ceil(timeLeft / 3600000);
+                        document.getElementById('next-ad').textContent = `Next ads available in: ${hoursLeft} hours`;
+                    } else {
+                        userData.adsToday = 0;
+                        userData.lastAdResetTime = now;
+                        await saveUserData();
+                        document.getElementById('next-ad').textContent = 'Next ads available: Now';
+                    }
+                } else if (now - userData.lastAdTime < 15000) {
+                    const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
+                    document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
+                } else {
+                    document.getElementById('next-ad').textContent = 'Next ad available: Now';
+                }
+                if (userData.adsWatched >= 20 && userData.referrals < 2) {
+                    document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
+                } else {
+                    document.getElementById('ad-lock-status').textContent = '';
+                }
+            } catch (error) {
+                console.error('Update ad availability error:', error);
+            }
+        }
+
+        // === Supabase: Check Ad Reset ===
+        async function checkAdReset() {
+            try {
+                const now = Date.now();
+                if (userData.adsToday >= 100 && now - userData.lastAdResetTime >= 43200000) {
+                    userData.adsToday = 0;
+                    userData.lastAdResetTime = now;
+                    await saveUserData();
+                }
+            } catch (error) {
+                console.error('Ad reset error:', error);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('user-name').textContent = userData.userName;
+            document.getElementById('user-id').textContent = `ID: ${userData.userId}`;
+            document.getElementById('user-coins').textContent = `${userData.coins} 🪙`;
+            document.getElementById('total-coins').textContent = `${userData.coins} 🪙`;
+            document.getElementById('ads-watched').textContent = userData.adsWatched;
+            document.getElementById('ref-count').textContent = userData.referrals;
+            document.getElementById('ref-code').textContent = userData.referralCode;
+            document.getElementById('ads-today').textContent = `Ads watched today: ${userData.adsToday}/100`;
+            document.getElementById('withdraw-coins').textContent = `${userData.coins} 🪙`;
+            document.getElementById('ref-status').textContent = userData.referrals >= 2 ? `2 referrals completed!` : '';
+        }
+
+        // === Supabase: Save User Data ===
+        async function saveUserData() {
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .upsert({
+                        id: userData.userId,
+                        name: userData.userName,
+                        coins: userData.coins,
+                        ads_watched: userData.adsWatched,
+                        ads_today: userData.adsToday,
+                        last_ad_time: userData.lastAdTime,
+                        last_ad_reset_time: userData.lastAdResetTime,
+                        referrals: userData.referrals,
+                        referral_code: userData.referralCode
+                    })
+                    .eq('id', userData.userId);
+                if (error) throw error;
+            } catch (error) {
+                console.error('Save user data error:', error);
+            }
+        }
+
+        // === Supabase: Request Withdrawal ===
+        async function requestWithdrawal() {
+            try {
+                const walletAddress = document.getElementById('wallet-address').value;
+                const withdrawAmount = parseInt(document.getElementById('withdraw-amount').value);
+                const referrals = parseInt(document.getElementById('referrals').value);
+                if (!walletAddress || withdrawAmount < 50000) {
+                    alert('Please enter a valid wallet address and minimum 50,000 🪙.');
+                    return;
+                }
+                if (withdrawAmount > userData.coins) {
+                    alert('You don\'t have enough coins to withdraw.');
+                    return;
+                }
+                if (referrals < 20) {
+                    alert('You must have at least 20 referrals to withdraw.');
+                    return;
+                }
+                userData.coins -= withdrawAmount;
+                await supabase.from('withdrawals').insert([
+                    { user_id: userData.userId, amount: withdrawAmount, address: walletAddress, date: new Date().toISOString(), status: 'pending' }
+                ]);
+                await saveUserData();
+                updateUI();
+                alert('Withdrawal request submitted successfully! You will receive 25 USDT for 50,000 🪙.');
+                document.getElementById('wallet-address').value = '';
+                document.getElementById('withdraw-amount').value = '';
+                document.getElementById('referrals').value = '';
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                alert('Error submitting withdrawal. Please try again.');
+            }
+        }
+
+        function makeBinanceAccount() {
+            window.open('https://www.binance.com/referral/earn-together/refer-in-hotsummer/claim?hl=en&ref=GRO_20338_0CPVP&utm_source=default', '_blank');
+        }
+
+        // === Supabase: Copy Referral ===
+        document.getElementById('copyReferral').addEventListener('click', async function() {
+            try {
+                const now = Date.now();
+                if (now - userData.lastCopyTime < 1800000) { // 30 minutes
+                    const timeLeft = Math.ceil((1800000 - (now - userData.lastCopyTime)) / 60000);
+                    alert(`Please wait ${timeLeft} minutes before copying again.`);
+                    return;
+                }
+
+                const referralMessage = `Your Telegram ID: ${userData.userId}\nJoin free crypto earning with @PandaXPNXbot! Referral Code: ${userData.referralCode} http://t.me/PandaXPNXbot`;
+                await navigator.clipboard.writeText(referralMessage);
+                alert('Referral message copied to clipboard! Use only this to get coins.');
+                userData.lastCopyTime = now;
+                await supabase.from('referrals').insert([
+                    { referrer_id: userData.userId, referred_id: null, timestamp: now, rewarded: false }
+                ]);
+                await saveUserData();
+                updateUI();
+            } catch (error) {
+                console.error('Copy referral error:', error);
+                alert('Failed to copy. Please try again.');
+            }
+        });
+
+        function joinChannel() {
+            window.open('https://t.me/earncryptofree24', '_blank');
+        }
+
+        // Initialize the app
+        initApp();
+        setInterval(checkReferralRewards, 60000); // Check every minute
+        setInterval(checkReferralCopyRewards, 60000); // Check every minute
+        setInterval(checkAdReset, 60000); // Check ad reset every minute
+    </script>
+</body>
+</html>
+  
