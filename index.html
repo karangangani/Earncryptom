@@ -6,7 +6,6 @@
     <title>Earn With Telegram</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src='//libtl.com/sdk.js' data-zone='9892483' data-sdk='show_9892483'></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0a0a1a; color: #fff; padding: 16px; max-width: 100%; overflow-x: hidden; background-image: radial-gradient(circle at 10% 20%, rgba(0, 136, 204, 0.1) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 136, 204, 0.1) 0%, transparent 20%); }
@@ -153,11 +152,6 @@
     </div>
 
     <script>
-        // === Supabase Initialization ===
-        const SUPABASE_URL = 'https://lkrkyalivrrmkoyfrhit.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxrcmt5YWxpdnJybWtveWZyaGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNDY1MDUsImV4cCI6MjA3MzcyMjUwNX0.g_lW4S9-C8uGxC5JrXfK_NWQEPnwwmMhT7vLdfS0K4Y';
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         // Initialize Telegram WebApp
         let tg = window.Telegram.WebApp;
         tg.expand();
@@ -168,143 +162,67 @@
             adsWatched: 0,
             adsToday: 0,
             lastAdTime: 0,
-            lastAdResetTime: 0,
+            lastAdResetTime: 0, // Track 12h reset
             referrals: 0,
             referralCode: "",
             userId: tg.initDataUnsafe.user?.id || Math.floor(Math.random() * 1000000),
             userName: tg.initDataUnsafe.user?.first_name || "Telegram User",
             walletAddress: "",
             withdrawals: [],
-            referralRewardsPending: {},
-            lastCopyTime: 0
+            referralRewardsPending: {}, // Store pending referral rewards with timestamps
+            lastCopyTime: 0 // Track last copy time for 30-min cooldown
         };
 
-        // === Supabase: Initialize App ===
-        async function initApp() {
-            try {
-                // Fetch or create user in Supabase
-                let { data: existingUser, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', userData.userId)
-                    .single();
-
-                if (error || !existingUser) {
-                    userData.referralCode = generateReferralCode();
-                    const newUser = { 
-                        id: userData.userId, 
-                        name: userData.userName, 
-                        coins: 0, 
-                        ads_watched: 0, 
-                        ads_today: 0, 
-                        last_ad_time: 0, 
-                        last_ad_reset_time: 0, 
-                        referrals: 0, 
-                        referral_code: userData.referralCode, 
-                        created_at: new Date().toISOString() 
-                    };
-                    const { data: insertedUser, error: insertError } = await supabase
-                        .from('users')
-                        .insert([newUser])
-                        .select()
-                        .single();
-                    if (insertError) throw insertError;
-                    userData = { ...userData, ...insertedUser };
-                } else {
-                    userData = { ...userData, ...existingUser };
-                }
-
-                await checkAdReset();
-                updateUI();
-                updateAdAvailability();
-                await checkReferralRewards();
-                await checkReferralCopyRewards();
-                await checkForReferral();
-            } catch (error) {
-                console.error('Init error:', error);
-                alert('Failed to initialize app. Please try again.');
+        function initApp() {
+            const savedData = localStorage.getItem('userData');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                const { userId, userName, ...rest } = parsedData;
+                userData = { ...userData, ...rest };
             }
+            if (!userData.referralCode) userData.referralCode = generateReferralCode();
+            checkAdReset();
+            updateUI();
+            updateAdAvailability();
+            checkReferralRewards();
+            checkReferralCopyRewards();
+            checkForReferral();
         }
 
         function generateReferralCode() {
             return 'REF' + userData.userId.toString().slice(-6) + Math.floor(Math.random() * 100).toString().padStart(2, '0');
         }
 
-        // === Supabase: Check for Referrals ===
-        async function checkForReferral() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const refCode = urlParams.get('ref');
-                if (refCode && refCode !== userData.referralCode) {
-                    const { data: referrer } = await supabase
-                        .from('users')
-                        .select('id')
-                        .eq('referral_code', refCode)
-                        .single();
-                    if (referrer) {
-                        // Check if referral already exists
-                        const { data: existingReferral } = await supabase
-                            .from('referrals')
-                            .select('*')
-                            .eq('referrer_id', referrer.id)
-                            .eq('referred_id', userData.userId);
-                        if (!existingReferral || existingReferral.length === 0) {
-                            await supabase.from('referrals').insert([
-                                { referrer_id: referrer.id, referred_id: userData.userId, timestamp: Date.now(), rewarded: false }
-                            ]);
-                            await supabase.rpc('increment_referrals', { user_id: referrer.id });
-                            alert('Referral recorded! Referrer will earn 100 🪙 after 1 hour.');
-                        }
-                    }
+        function checkForReferral() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            if (refCode && refCode !== userData.referralCode) {
+                const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
+                if (!referralsGiven[refCode]) {
+                    referralsGiven[refCode] = { timestamp: Date.now() };
+                    localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
+                    userData.referrals += 1;
+                    saveUserData();
+                    alert('Referral recorded! You will earn 100 🪙 after 1 hour.');
                 }
-            } catch (error) {
-                console.error('Referral check error:', error);
             }
         }
-      // === Supabase: Check Referral Rewards ===
-        async function checkReferralRewards() {
-            try {
-                const { data: referrals } = await supabase
-                    .from('referrals')
-                    .select('*')
-                    .eq('referrer_id', userData.userId)
-                    .eq('rewarded', false);
-                
-                for (let ref of referrals) {
-                    if (Date.now() - ref.timestamp >= 3600000) { // 1 hour
+
+        function checkReferralRewards() {
+            const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
+            for (let refCode in referralsGiven) {
+                if (!userData.referralRewardsPending[refCode]) {
+                    const timestamp = referralsGiven[refCode].timestamp;
+                    if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
                         userData.coins += 100;
-                        await supabase.from('referrals').update({ rewarded: true }).eq('id', ref.id);
-                        await saveUserData();
+                        userData.referralRewardsPending[refCode] = true;
+                        delete referralsGiven[refCode];
+                        localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
+                        saveUserData();
                         updateUI();
                         alert('You earned 100 🪙 from a referral!');
                     }
                 }
-            } catch (error) {
-                console.error('Referral rewards error:', error);
-            }
-        }
-
-        // === Supabase: Check Referral Copy Rewards ===
-        async function checkReferralCopyRewards() {
-            try {
-                const { data: referrals } = await supabase
-                    .from('referrals')
-                    .select('*')
-                    .eq('referrer_id', userData.userId)
-                    .eq('rewarded', false);
-                
-                for (let ref of referrals) {
-                    if (Date.now() - ref.timestamp >= 3600000) { // 1 hour
-                        userData.coins += 100;
-                        userData.referrals += 2; // Add 2 referrals for copy
-                        await supabase.from('referrals').update({ rewarded: true }).eq('id', ref.id);
-                        await saveUserData();
-                        updateUI();
-                        alert('You earned 100 🪙 and 2 referrals for copying your referral!');
-                    }
-                }
-            } catch (error) {
-                console.error('Referral copy rewards error:', error);
             }
         }
 
@@ -314,88 +232,77 @@
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
         }
-
-        async function watchAd(type) {
-            try {
-                if (userData.adsToday >= 100) {
-                    const timeLeft = Math.max(0, 43200000 - (Date.now() - userData.lastAdResetTime)); // 12h
-                    if (timeLeft > 0) {
-                        const hoursLeft = Math.ceil(timeLeft / 3600000);
-                        alert(`You have reached the daily limit of 100 ads. Please wait ${hoursLeft} hours to watch again.`);
-                        return;
-                    } else {
-                        userData.adsToday = 0;
-                        userData.lastAdResetTime = Date.now();
-                        await saveUserData();
-                    }
-                }
-                if (userData.adsWatched >= 20 && userData.referrals < 2) {
-                    document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
-                    alert('You need to refer 2 friends to unlock more ads after 20 ads.');
+function watchAd(type) {
+            if (userData.adsToday >= 100) {
+                const timeLeft = Math.max(0, 43200000 - (Date.now() - userData.lastAdResetTime)); // 12h = 43200000 ms
+                if (timeLeft > 0) {
+                    const hoursLeft = Math.ceil(timeLeft / 3600000);
+                    alert(`You have reached the daily limit of 100 ads. Please wait ${hoursLeft} hours to watch again.`);
                     return;
+                } else {
+                    userData.adsToday = 0;
+                    userData.lastAdResetTime = Date.now();
+                    saveUserData();
                 }
-
-                const now = Date.now();
-                if (now - userData.lastAdTime < 15000) {
-                    const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
-                    document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
-                    alert(`Please wait ${timeLeft} seconds before watching another ad.`);
-                    return;
-                }
-
-                const loader = document.getElementById('ad-loader');
-                loader.style.display = 'block';
-                document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-
-                let adCall;
-                if (type === 'interstitial') {
-                    adCall = show_9892483().then(() => {
-                        rewardUser();
-                        alert('You have seen an ad!');
-                    }).catch(() => {
-                        alert('Ad failed to load. Please try again later.');
-                    });
-                } else if (type === 'popup') {
-                    adCall = show_9892483('pop').then(() => {
-                        rewardUser();
-                    }).catch(() => {
-                        alert('Ad failed to load. Please try again later.');
-                    });
-                } else if (type === 'inApp') {
-                    adCall = show_9892483({
-                        type: 'inApp',
-                        inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false }
-                    }).catch(() => {
-                        alert('Ad failed to load. Please try again later.');
-                    });
-                }
-                adCall.finally(() => {
-                    loader.style.display = 'none';
-                    document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
-                });
-            } catch (error) {
-                console.error('Watch ad error:', error);
-                alert('Error watching ad. Please try again.');
             }
+            if (userData.adsWatched >= 20 && userData.referrals < 2) {
+                document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
+                alert('You need to refer 2 friends to unlock more ads after 20 ads.');
+                return;
+            }
+
+            const now = Date.now();
+            if (now - userData.lastAdTime < 15000) {
+                const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
+                document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
+                alert(`Please wait ${timeLeft} seconds before watching another ad.`);
+                return;
+            }
+
+            const loader = document.getElementById('ad-loader');
+            loader.style.display = 'block';
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+
+            let adCall;
+            if (type === 'interstitial') {
+                adCall = show_9892483().then(() => {
+                    rewardUser();
+                    alert('You have seen an ad!');
+                }).catch(() => {
+                    alert('Ad failed to load. Please try again later.');
+                });
+            } else if (type === 'popup') {
+                adCall = show_9892483('pop').then(() => {
+                    rewardUser();
+                }).catch(() => {
+                    alert('Ad failed to load. Please try again later.');
+                });
+            } else if (type === 'inApp') {
+                adCall = show_9892483({
+                    type: 'inApp',
+                    inAppSettings: { frequency: 2, capping: 0.1, interval: 30, timeout: 5, everyPage: false }
+                }).catch(() => {
+                    alert('Ad failed to load. Please try again later.');
+                });
+            }
+            adCall.finally(() => {
+                loader.style.display = 'none';
+                document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
+            });
         }
 
-        // === Supabase: Reward User ===
-        async function rewardUser() {
-            try {
-                userData.coins += 20;
-                userData.adsWatched += 1;
-                userData.adsToday += 1;
-                userData.lastAdTime = Date.now();
-                if (userData.adsToday >= 100) {
-                    userData.lastAdResetTime = Date.now();
-                }
-                await saveUserData();
-                updateUI();
-                startCountdown();
-                alert('You earned 20 🪙!');
-            } catch (error) {
-                console.error('Reward user error:', error);
+        function rewardUser() {
+            userData.coins += 20;
+            userData.adsWatched += 1;
+            userData.adsToday += 1;
+            userData.lastAdTime = Date.now();
+            if (userData.adsToday >= 100) {
+                userData.lastAdResetTime = Date.now();
             }
+            updateUI();
+            startCountdown();
+            saveUserData();
+            alert('You earned 20 🪙!');
         }
 
         function startCountdown() {
@@ -417,48 +324,38 @@
             }, 1000);
         }
 
-        // === Supabase: Update Ad Availability ===
-        async function updateAdAvailability() {
-            try {
-                const now = Date.now();
-                if (userData.adsToday >= 100) {
-                    const timeLeft = Math.max(0, 43200000 - (now - userData.lastAdResetTime));
-                    if (timeLeft > 0) {
-                        const hoursLeft = Math.ceil(timeLeft / 3600000);
-                        document.getElementById('next-ad').textContent = `Next ads available in: ${hoursLeft} hours`;
-                    } else {
-                        userData.adsToday = 0;
-                        userData.lastAdResetTime = now;
-                        await saveUserData();
-                        document.getElementById('next-ad').textContent = 'Next ads available: Now';
-                    }
-                } else if (now - userData.lastAdTime < 15000) {
-                    const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
-                    document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
+        function updateAdAvailability() {
+            const now = Date.now();
+            if (userData.adsToday >= 100) {
+                const timeLeft = Math.max(0, 43200000 - (now - userData.lastAdResetTime));
+                if (timeLeft > 0) {
+                    const hoursLeft = Math.ceil(timeLeft / 3600000);
+                    document.getElementById('next-ad').textContent = `Next ads available in: ${hoursLeft} hours`;
                 } else {
-                    document.getElementById('next-ad').textContent = 'Next ad available: Now';
+                    userData.adsToday = 0;
+                    userData.lastAdResetTime = now;
+                    saveUserData();
+                    document.getElementById('next-ad').textContent = 'Next ads available: Now';
                 }
-                if (userData.adsWatched >= 20 && userData.referrals < 2) {
-                    document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
-                } else {
-                    document.getElementById('ad-lock-status').textContent = '';
-                }
-            } catch (error) {
-                console.error('Update ad availability error:', error);
+            } else if (now - userData.lastAdTime < 15000) {
+                const timeLeft = Math.ceil((15000 - (now - userData.lastAdTime)) / 1000);
+                document.getElementById('next-ad').textContent = `Next ad available in: ${timeLeft}s`;
+            } else {
+                document.getElementById('next-ad').textContent = 'Next ad available: Now';
+            }
+            if (userData.adsWatched >= 20 && userData.referrals < 2) {
+                document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
+            } else {
+                document.getElementById('ad-lock-status').textContent = '';
             }
         }
 
-        // === Supabase: Check Ad Reset ===
-        async function checkAdReset() {
-            try {
-                const now = Date.now();
-                if (userData.adsToday >= 100 && now - userData.lastAdResetTime >= 43200000) {
-                    userData.adsToday = 0;
-                    userData.lastAdResetTime = now;
-                    await saveUserData();
-                }
-            } catch (error) {
-                console.error('Ad reset error:', error);
+        function checkAdReset() {
+            const now = Date.now();
+            if (userData.adsToday >= 100 && now - userData.lastAdResetTime >= 43200000) {
+                userData.adsToday = 0;
+                userData.lastAdResetTime = now;
+                saveUserData();
             }
         }
 
@@ -475,94 +372,97 @@
             document.getElementById('ref-status').textContent = userData.referrals >= 2 ? `2 referrals completed!` : '';
         }
 
-        // === Supabase: Save User Data ===
-        async function saveUserData() {
-            try {
-                const { error } = await supabase
-                    .from('users')
-                    .upsert({
-                        id: userData.userId,
-                        name: userData.userName,
-                        coins: userData.coins,
-                        ads_watched: userData.adsWatched,
-                        ads_today: userData.adsToday,
-                        last_ad_time: userData.lastAdTime,
-                        last_ad_reset_time: userData.lastAdResetTime,
-                        referrals: userData.referrals,
-                        referral_code: userData.referralCode
-                    })
-                    .eq('id', userData.userId);
-                if (error) throw error;
-            } catch (error) {
-                console.error('Save user data error:', error);
-            }
-        }
+        function saveUserData() {
+            localStorage.setItem('userData', JSON.stringify(userData));
+             }
 
-        // === Supabase: Request Withdrawal ===
-        async function requestWithdrawal() {
-            try {
-                const walletAddress = document.getElementById('wallet-address').value;
-                const withdrawAmount = parseInt(document.getElementById('withdraw-amount').value);
-                const referrals = parseInt(document.getElementById('referrals').value);
-                if (!walletAddress || withdrawAmount < 50000) {
-                    alert('Please enter a valid wallet address and minimum 50,000 🪙.');
-                    return;
-                }
-                if (withdrawAmount > userData.coins) {
-                    alert('You don\'t have enough coins to withdraw.');
-                    return;
-                }
-                if (referrals < 20) {
-                    alert('You must have at least 20 referrals to withdraw.');
-                    return;
-                }
-                userData.coins -= withdrawAmount;
-                await supabase.from('withdrawals').insert([
-                    { user_id: userData.userId, amount: withdrawAmount, address: walletAddress, date: new Date().toISOString(), status: 'pending' }
-                ]);
-                await saveUserData();
-                updateUI();
-                alert('Withdrawal request submitted successfully! You will receive 25 USDT for 50,000 🪙.');
-                document.getElementById('wallet-address').value = '';
-                document.getElementById('withdraw-amount').value = '';
-                document.getElementById('referrals').value = '';
-            } catch (error) {
-                console.error('Withdrawal error:', error);
-                alert('Error submitting withdrawal. Please try again.');
+        function requestWithdrawal() {
+            const walletAddress = document.getElementById('wallet-address').value;
+            const withdrawAmount = parseInt(document.getElementById('withdraw-amount').value);
+            const referrals = parseInt(document.getElementById('referrals').value);
+            if (!walletAddress || withdrawAmount < 50000) {
+                alert('Please enter a valid wallet address and minimum 50,000 🪙.');
+                return;
             }
+            if (withdrawAmount > userData.coins) {
+                alert('You don\'t have enough coins to withdraw.');
+                return;
+            }
+            if (referrals < 20) {
+                alert('You must have at least 20 referrals to withdraw.');
+                return;
+            }
+            userData.coins -= withdrawAmount;
+            userData.withdrawals.push({ amount: withdrawAmount, address: walletAddress, date: new Date().toISOString(), referrals: referrals });
+            saveUserData();
+            updateUI();
+            alert('Withdrawal request submitted successfully! You will receive 25 USDT for 50,000 🪙.');
+            document.getElementById('wallet-address').value = '';
+            document.getElementById('withdraw-amount').value = '';
+            document.getElementById('referrals').value = '';
         }
 
         function makeBinanceAccount() {
             window.open('https://www.binance.com/referral/earn-together/refer-in-hotsummer/claim?hl=en&ref=GRO_20338_0CPVP&utm_source=default', '_blank');
         }
 
-        // === Supabase: Copy Referral ===
-        document.getElementById('copyReferral').addEventListener('click', async function() {
-            try {
-                const now = Date.now();
-                if (now - userData.lastCopyTime < 1800000) { // 30 minutes
-                    const timeLeft = Math.ceil((1800000 - (now - userData.lastCopyTime)) / 60000);
-                    alert(`Please wait ${timeLeft} minutes before copying again.`);
-                    return;
-                }
+        document.getElementById('copyReferral').addEventListener('click', function() {
+            const now = Date.now();
+            if (now - userData.lastCopyTime < 1800000) { // 30 minutes = 1800000 ms
+                const timeLeft = Math.ceil((1800000 - (now - userData.lastCopyTime)) / 60000);
+                alert(`Please wait ${timeLeft} minutes before copying again.`);
+                return;
+            }
 
-                const referralMessage = `Your Telegram ID: ${userData.userId}\nJoin free crypto earning with @PandaXPNXbot! Referral Code: ${userData.referralCode} http://t.me/PandaXPNXbot`;
-                await navigator.clipboard.writeText(referralMessage);
+            const referralMessage = `Your Telegram ID: ${userData.userId}\nJoin free crypto earning with @PandaXPNXbot! Referral Code: ${userData.referralCode} http://t.me/PandaXPNXbot`;
+            navigator.clipboard.writeText(referralMessage).then(() => {
                 alert('Referral message copied to clipboard! Use only this to get coins.');
                 userData.lastCopyTime = now;
-                await supabase.from('referrals').insert([
-                    { referrer_id: userData.userId, referred_id: null, timestamp: now, rewarded: false }
-                ]);
-                await saveUserData();
-                updateUI();
-            } catch (error) {
-                console.error('Copy referral error:', error);
+                const referralsCopied = JSON.parse(localStorage.getItem('referralsCopied') || '{}');
+                referralsCopied[userData.referralCode] = { timestamp: now };
+                localStorage.setItem('referralsCopied', JSON.stringify(referralsCopied));
+                checkReferralCopyRewards();
+            }).catch(() => {
                 alert('Failed to copy. Please try again.');
-            }
+            });
         });
 
+        function checkReferralCopyRewards() {
+            const referralsCopied = JSON.parse(localStorage.getItem('referralsCopied') || '{}');
+            for (let refCode in referralsCopied) {
+                const timestamp = referralsCopied[refCode].timestamp;
+                if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
+                    userData.coins += 100;
+                    userData.referrals += 2; // Add 2 referrals now
+                    delete referralsCopied[refCode];
+                    localStorage.setItem('referralsCopied', JSON.stringify(referralsCopied));
+                    saveUserData();
+                    updateUI();
+                    alert('You earned 100 🪙 and 2 referrals for copying your referral!');
+                }
+            }
+        }
+
+        function checkReferralRewards() {
+            const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
+            for (let refCode in referralsGiven) {
+                if (!userData.referralRewardsPending[refCode]) {
+                    const timestamp = referralsGiven[refCode].timestamp;
+                    if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
+                        userData.coins += 100;
+                        userData.referralRewardsPending[refCode] = true;
+                        delete referralsGiven[refCode];
+                        localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
+                        saveUserData();
+                        updateUI();
+                        alert('You earned 100 🪙 from a referral!');
+                    }
+                }
+            }
+        }
+
         function joinChannel() {
-            window.open('https://t.me/earncryptofree24', '_blank');
+            window.open('https://t.me/kxearnig', '_blank'); // Update this if a new channel link is provided
         }
 
         // Initialize the app
@@ -573,4 +473,3 @@
     </script>
 </body>
 </html>
-  
