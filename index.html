@@ -8,40 +8,176 @@
     <script src='//libtl.com/sdk.js' data-zone='9892483' data-sdk='show_9892483'></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0a0a1a; color: #fff; padding: 16px; max-width: 100%; overflow-x: hidden; background-image: radial-gradient(circle at 10% 20%, rgba(0, 136, 204, 0.1) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 136, 204, 0.1) 0%, transparent 20%); }
-        .container { max-width: 500px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #0088cc, #005599); border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .user-info { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px; background-color: rgba(0, 0, 0, 0.3); border-radius: 10px; }
-        .nav { display: flex; justify-content: space-around; margin: 20px 0; padding: 12px; background-color: #111; border-radius: 15px; }
-        .nav-btn { padding: 12px 20px; background-color: #0088cc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .nav-btn.active { background-color: #006699; box-shadow: 0 0 15px rgba(0, 136, 204, 0.5); }
-        .section { display: none; padding: 20px; background-color: #111; border-radius: 15px; margin-bottom: 20px; min-height: 300px; }
+        body { 
+            background: linear-gradient(135deg, #0f1c2e, #1a2e44); /* Darker gradient */
+            color: #e0e0e0;
+            padding: 16px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: rgba(15, 28, 46, 0.9); /* Semi-transparent dark */
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #00ccff; /* Bright cyan border */
+            box-shadow: 0 8px 20px rgba(0, 204, 255, 0.3);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            padding: 20px; 
+            background: linear-gradient(90deg, #00ccff, #6a00ff); /* Cyan to purple */
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 4px 15px rgba(0, 204, 255, 0.5);
+        }
+        .header h1 { font-size: 26px; margin-bottom: 5px; color: #fff; }
+        .header p { font-size: 14px; color: #b3e5ff; }
+        .user-info { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-top: 15px; 
+            padding: 12px; 
+            background: rgba(20, 40, 60, 0.8); /* Darker user info */
+            border-radius: 10px;
+            border: 1px solid #00ccff;
+            transition: transform 0.3s;
+        }
+        .user-info:hover { transform: translateY(-5px); }
+        .nav { 
+            display: flex; 
+            justify-content: space-around; 
+            margin: 20px 0; 
+            padding: 12px; 
+            background: rgba(20, 40, 60, 0.8); /* Darker nav */
+            border-radius: 15px;
+            border: 1px solid #00ccff;
+        }
+        .nav-btn { 
+            padding: 12px 20px; 
+            background: #00ccff; /* Bright cyan */
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: all 0.3s;
+        }
+        .nav-btn.active { 
+            background: #0099cc; 
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+        }
+        .nav-btn:hover { transform: scale(1.05); }
+        .section { 
+            display: none; 
+            padding: 20px; 
+            background: rgba(20, 40, 60, 0.8); /* Darker section */
+            border-radius: 15px; 
+            margin-bottom: 20px; 
+            min-height: 300px;
+            border: 1px solid #00ccff;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .section.active { display: block; }
         .stats { display: flex; justify-content: space-between; margin: 20px 0; }
-        .stat-box { background-color: #1a1a2a; padding: 15px; border-radius: 10px; text-align: center; flex: 1; margin: 0 5px; border: 1px solid #0088cc; }
-        .stat-value { font-size: 24px; color: #0088cc; font-weight: bold; }
-        .stat-label { font-size: 14px; color: #aaa; }
-        .referral-section { text-align: center; margin: 25px 0; padding: 15px; background-color: #1a1a2a; border-radius: 10px; }
-        .referral-code { padding: 15px; background-color: #2a2a4a; border-radius: 10px; margin: 15px 0; font-size: 18px; letter-spacing: 2px; color: #0088cc; font-weight: bold; border: 1px dashed #0088cc; }
-        .info-text { text-align: center; margin: 15px 0; color: #aaa; font-size: 14px; }
-        .ad-container { background: linear-gradient(135deg, #1a1a2a, #2a2a4a); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #0088cc; cursor: pointer; transition: all 0.3s; }
-        .ad-container:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3); }
-        .ad-title { font-size: 20px; margin-bottom: 10px; color: #0088cc; }
-        .ad-description { color: #aaa; margin-bottom: 15px; }
-        .btn { padding: 12px 25px; background-color: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .btn:hover { background-color: #006699; }
-        .btn:disabled { background-color: #555; cursor: not-allowed; }
-        .loader { border: 5px solid #333; border-top: 5px solid #0088cc; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        .stat-box { 
+            background: rgba(15, 28, 46, 0.7); /* Darker stat box */
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: center; 
+            flex: 1; 
+            margin: 0 5px; 
+            border: 1px solid #00d4ff; /* Lighter cyan */
+            transition: all 0.3s;
+        }
+        .stat-box:hover { background: rgba(0, 204, 255, 0.2); }
+        .stat-value { font-size: 24px; color: #00d4ff; font-weight: bold; }
+        .stat-label { font-size: 14px; color: #b3e5ff; }
+        .referral-section { 
+            text-align: center; 
+            margin: 25px 0; 
+            padding: 15px; 
+            background: rgba(15, 28, 46, 0.7); /* Darker referral */
+            border-radius: 10px;
+            border: 1px dashed #00d4ff;
+        }
+        .referral-code { 
+            padding: 15px; 
+            background: rgba(30, 50, 70, 0.8); /* Darker referral code */
+            border-radius: 10px; 
+            margin: 15px 0; 
+            font-size: 18px; 
+            letter-spacing: 2px; 
+            color: #00d4ff;
+            font-weight: bold;
+            border: 1px solid #00ccff;
+        }
+        .info-text { text-align: center; margin: 15px 0; color: #b3e5ff; font-size: 14px; }
+        .ad-container { 
+            background: linear-gradient(135deg, #1a2e44, #2a3e54); /* Darker ad container */
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            border: 1px solid #00ccff;
+            cursor: pointer; 
+            transition: all 0.3s;
+        }
+        .ad-container:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 204, 255, 0.3); }
+        .ad-title { font-size: 20px; margin-bottom: 10px; color: #00ccff; }
+        .ad-description { color: #b3e5ff; margin-bottom: 15px; }
+        .btn { 
+            padding: 12px 25px; 
+            background: #00ccff; /* Bright cyan */
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: all 0.3s;
+        }
+        .btn:hover { background: #0099cc; }
+        .btn:disabled { background: #555; cursor: not-allowed; }
+        .loader { 
+            border: 5px solid #222; 
+            border-top: 5px solid #00ccff; /* Cyan loader */
+            border-radius: 50%; 
+            width: 50px; 
+            height: 50px; 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+            display: none;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; }
         .withdraw-form { margin-top: 20px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid #333; background-color: #222; color: white; }
-        .ad-status { text-align: center; margin: 15px 0; padding: 10px; background-color: #1a1a2a; border-radius: 10px; }
-        .countdown { font-size: 18px; color: #0088cc; font-weight: bold; margin: 10px 0; }
-        .channel-btn { padding: 12px 25px; background-color: #0088cc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #b3e5ff; }
+        .form-group input { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: 1px solid #333; 
+            background: #222; 
+            color: white;
+        }
+        .ad-status { text-align: center; margin: 15px 0; padding: 10px; background: rgba(20, 40, 60, 0.8); border-radius: 10px; }
+        .countdown { font-size: 18px; color: #00d4ff; font-weight: bold; margin: 10px 0; }
+        .channel-btn { 
+            padding: 12px 25px; 
+            background: #00ccff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        .channel-btn:hover { background: #0099cc; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -57,8 +193,7 @@
                 <div id="user-coins">0 🪙</div>
             </div>
         </div>
-        
-        <div class="nav">
+         <div class="nav">
             <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
             <button class="nav-btn" onclick="showSection('ads')">Ads</button>
             <button class="nav-btn" onclick="showSection('withdraw')">Withdraw</button>
@@ -93,7 +228,7 @@
             </div>
             <button class="channel-btn" onclick="joinChannel()">Join Official Channel</button>
         </div>
-        
+                
         <div id="ads" class="section">
             <h2>Watch Ads & Earn Coins</h2>
             <p class="info-text">Click on an ad to watch and earn 20 🪙. After 20 ads, refer 2 friends to unlock all ads.</p>
@@ -170,11 +305,12 @@
             walletAddress: "",
             withdrawals: [],
             referralRewardsPending: {}, // Store pending referral rewards with timestamps
-            lastCopyTime: 0 // Track last copy time for 30-min cooldown
+            lastCopyTime: 0, // Track last copy time for 30-min cooldown
+            lastReferralCheck: 0 // Track 24h referral check
         };
 
         function initApp() {
-            const savedData = localStorage.getItem('userData');
+            const savedData = localStorage.getItem(`userData_${userData.userId}`);
             if (savedData) {
                 const parsedData = JSON.parse(savedData);
                 const { userId, userName, ...rest } = parsedData;
@@ -182,6 +318,7 @@
             }
             if (!userData.referralCode) userData.referralCode = generateReferralCode();
             checkAdReset();
+            checkReferralMilestone();
             updateUI();
             updateAdAvailability();
             checkReferralRewards();
@@ -197,10 +334,10 @@
             const urlParams = new URLSearchParams(window.location.search);
             const refCode = urlParams.get('ref');
             if (refCode && refCode !== userData.referralCode) {
-                const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
+                const referralsGiven = JSON.parse(localStorage.getItem(`referralsGiven_${userData.userId}`) || '{}');
                 if (!referralsGiven[refCode]) {
-                    referralsGiven[refCode] = { timestamp: Date.now() };
-                    localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
+                                       referralsGiven[refCode] = { timestamp: Date.now() };
+                    localStorage.setItem(`referralsGiven_${userData.userId}`, JSON.stringify(referralsGiven));
                     userData.referrals += 1;
                     saveUserData();
                     alert('Referral recorded! You will earn 100 🪙 after 1 hour.');
@@ -209,7 +346,7 @@
         }
 
         function checkReferralRewards() {
-            const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
+            const referralsGiven = JSON.parse(localStorage.getItem(`referralsGiven_${userData.userId}`) || '{}');
             for (let refCode in referralsGiven) {
                 if (!userData.referralRewardsPending[refCode]) {
                     const timestamp = referralsGiven[refCode].timestamp;
@@ -217,11 +354,27 @@
                         userData.coins += 100;
                         userData.referralRewardsPending[refCode] = true;
                         delete referralsGiven[refCode];
-                        localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
+                        localStorage.setItem(`referralsGiven_${userData.userId}`, JSON.stringify(referralsGiven));
                         saveUserData();
                         updateUI();
                         alert('You earned 100 🪙 from a referral!');
                     }
+                }
+            }
+        }
+
+        function checkReferralCopyRewards() {
+            const referralsCopied = JSON.parse(localStorage.getItem(`referralsCopied_${userData.userId}`) || '{}');
+            for (let refCode in referralsCopied) {
+                const timestamp = referralsCopied[refCode].timestamp;
+                if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
+                    userData.coins += 100;
+                    userData.referrals += 2; // Add 2 referrals now
+                    delete referralsCopied[refCode];
+                    localStorage.setItem(`referralsCopied_${userData.userId}`, JSON.stringify(referralsCopied));
+                    saveUserData();
+                    updateUI();
+                    alert('You earned 100 🪙 and 2 referrals for copying your referral!');
                 }
             }
         }
@@ -232,7 +385,8 @@
             document.getElementById(sectionId).classList.add('active');
             event.target.classList.add('active');
         }
-function watchAd(type) {
+
+        function watchAd(type) {
             if (userData.adsToday >= 100) {
                 const timeLeft = Math.max(0, 43200000 - (Date.now() - userData.lastAdResetTime)); // 12h = 43200000 ms
                 if (timeLeft > 0) {
@@ -290,19 +444,30 @@ function watchAd(type) {
                 document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
             });
         }
-
         function rewardUser() {
             userData.coins += 20;
             userData.adsWatched += 1;
             userData.adsToday += 1;
             userData.lastAdTime = Date.now();
-            if (userData.adsToday >= 100) {
-                userData.lastAdResetTime = Date.now();
-            }
+            if (userData.adsToday >= 100) userData.lastAdResetTime = Date.now();
+            checkReferralMilestone();
             updateUI();
             startCountdown();
             saveUserData();
             alert('You earned 20 🪙!');
+        }
+
+        function checkReferralMilestone() {
+            const now = Date.now();
+            if (userData.adsWatched === 30 && !userData.lastReferralCheck) {
+                userData.lastReferralCheck = now;
+                alert('You have completed 30 ads! Refer 2 friends within 24 hours to unlock more ads.');
+                document.getElementById('ref-status').textContent = 'Refer 2 friends within 24h to unlock more ads!';
+            } else if (userData.lastReferralCheck && (now - userData.lastReferralCheck >= 86400000)) { // 24 hours = 86400000 ms
+                userData.lastReferralCheck = 0;
+                document.getElementById('ref-status').textContent = '';
+                alert('24-hour referral period expired. Ads unlocked only if 2 referrals achieved.');
+            }
         }
 
         function startCountdown() {
@@ -343,7 +508,9 @@ function watchAd(type) {
             } else {
                 document.getElementById('next-ad').textContent = 'Next ad available: Now';
             }
-            if (userData.adsWatched >= 20 && userData.referrals < 2) {
+            if (userData.adsWatched >= 20 && userData.referrals < 2 && userData.lastReferralCheck) {
+                document.getElementById('ad-lock-status').textContent = 'Refer 2 friends within 24h to unlock all ads!';
+            } else if (userData.adsWatched >= 20 && userData.referrals < 2) {
                 document.getElementById('ad-lock-status').textContent = 'Refer 2 friends to unlock all ads!';
             } else {
                 document.getElementById('ad-lock-status').textContent = '';
@@ -352,13 +519,15 @@ function watchAd(type) {
 
         function checkAdReset() {
             const now = Date.now();
-            if (userData.adsToday >= 100 && now - userData.lastAdResetTime >= 43200000) {
+            if (userData.adsToday > 0 && now - userData.lastAdResetTime >= 43200000) { // 12 hours
                 userData.adsToday = 0;
                 userData.lastAdResetTime = now;
                 saveUserData();
+                updateUI();
+                alert('Your daily ad limit has reset! You can watch 100 ads again.');
             }
         }
-
+        
         function updateUI() {
             document.getElementById('user-name').textContent = userData.userName;
             document.getElementById('user-id').textContent = `ID: ${userData.userId}`;
@@ -369,12 +538,12 @@ function watchAd(type) {
             document.getElementById('ref-code').textContent = userData.referralCode;
             document.getElementById('ads-today').textContent = `Ads watched today: ${userData.adsToday}/100`;
             document.getElementById('withdraw-coins').textContent = `${userData.coins} 🪙`;
-            document.getElementById('ref-status').textContent = userData.referrals >= 2 ? `2 referrals completed!` : '';
+            document.getElementById('ref-status').textContent = userData.referrals >= 2 ? `2 referrals completed!` : (userData.lastReferralCheck ? 'Refer 2 friends within 24h to unlock more ads!' : '');
         }
 
         function saveUserData() {
-            localStorage.setItem('userData', JSON.stringify(userData));
-             }
+            localStorage.setItem(`userData_${userData.userId}`, JSON.stringify(userData));
+        }
 
         function requestWithdrawal() {
             const walletAddress = document.getElementById('wallet-address').value;
@@ -418,9 +587,9 @@ function watchAd(type) {
             navigator.clipboard.writeText(referralMessage).then(() => {
                 alert('Referral message copied to clipboard! Use only this to get coins.');
                 userData.lastCopyTime = now;
-                const referralsCopied = JSON.parse(localStorage.getItem('referralsCopied') || '{}');
+                const referralsCopied = JSON.parse(localStorage.getItem(`referralsCopied_${userData.userId}`) || '{}');
                 referralsCopied[userData.referralCode] = { timestamp: now };
-                localStorage.setItem('referralsCopied', JSON.stringify(referralsCopied));
+                localStorage.setItem(`referralsCopied_${userData.userId}`, JSON.stringify(referralsCopied));
                 checkReferralCopyRewards();
             }).catch(() => {
                 alert('Failed to copy. Please try again.');
@@ -428,14 +597,14 @@ function watchAd(type) {
         });
 
         function checkReferralCopyRewards() {
-            const referralsCopied = JSON.parse(localStorage.getItem('referralsCopied') || '{}');
+            const referralsCopied = JSON.parse(localStorage.getItem(`referralsCopied_${userData.userId}`) || '{}');
             for (let refCode in referralsCopied) {
                 const timestamp = referralsCopied[refCode].timestamp;
                 if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
                     userData.coins += 100;
                     userData.referrals += 2; // Add 2 referrals now
                     delete referralsCopied[refCode];
-                    localStorage.setItem('referralsCopied', JSON.stringify(referralsCopied));
+                    localStorage.setItem(`referralsCopied_${userData.userId}`, JSON.stringify(referralsCopied));
                     saveUserData();
                     updateUI();
                     alert('You earned 100 🪙 and 2 referrals for copying your referral!');
@@ -443,26 +612,8 @@ function watchAd(type) {
             }
         }
 
-        function checkReferralRewards() {
-            const referralsGiven = JSON.parse(localStorage.getItem('referralsGiven') || '{}');
-            for (let refCode in referralsGiven) {
-                if (!userData.referralRewardsPending[refCode]) {
-                    const timestamp = referralsGiven[refCode].timestamp;
-                    if (Date.now() - timestamp >= 3600000) { // 1 hour = 3600000 ms
-                        userData.coins += 100;
-                        userData.referralRewardsPending[refCode] = true;
-                        delete referralsGiven[refCode];
-                        localStorage.setItem('referralsGiven', JSON.stringify(referralsGiven));
-                        saveUserData();
-                        updateUI();
-                        alert('You earned 100 🪙 from a referral!');
-                    }
-                }
-            }
-        }
-
         function joinChannel() {
-            window.open('https://t.me/kxearnig', '_blank'); // Update this if a new channel link is provided
+            window.open('https://t.me/kxearnig', '_blank');
         }
 
         // Initialize the app
